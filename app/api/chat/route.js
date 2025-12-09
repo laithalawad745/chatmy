@@ -1,6 +1,14 @@
 //app/api/chat/route.js
 export async function POST(req) {
   try {
+    // التحقق من وجود API Key
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error('❌ OPENROUTER_API_KEY غير موجود');
+      return Response.json({ 
+        error: 'مفتاح API غير موجود. يرجى التحقق من إعدادات Vercel' 
+      }, { status: 500 });
+    }
+
     const { messages, model, image, file } = await req.json();
 
     const selectedModel = model;
@@ -48,25 +56,42 @@ export async function POST(req) {
         {
           id: "file-parser",
           pdf: {
-            engine: "pdf-text"  // المحرك المجاني!
+            engine: "pdf-text"
           }
         }
       ];
     }
 
+    console.log('🚀 إرسال طلب إلى OpenRouter...');
+    
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
+        'HTTP-Referer': process.env.NEXT_PUBLIC_SITE_URL || 'https://yoursite.com',
+        'X-Title': 'Chat Bot'
       },
       body: JSON.stringify(requestBody),
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ خطأ من OpenRouter:', response.status, errorText);
+      return Response.json({ 
+        error: `خطأ من الخادم (${response.status}): ${errorText}` 
+      }, { status: response.status });
+    }
+
     const data = await response.json();
+    console.log('✅ استجابة ناجحة من OpenRouter');
+    
     return Response.json(data);
+    
   } catch (error) {
-    console.error('API Error:', error);
-    return Response.json({ error: 'حدث خطأ في المعالجة' }, { status: 500 });
+    console.error('❌ API Error:', error);
+    return Response.json({ 
+      error: `حدث خطأ: ${error.message}` 
+    }, { status: 500 });
   }
 }
