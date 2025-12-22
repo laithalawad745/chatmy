@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Code, Image, Send, Trash2, Camera, X, Cpu, Sparkles, Zap, Brain, FileText } from 'lucide-react';
+import { MessageSquare, Code, Image, Send, Camera, X, Cpu, FileText, Menu, ChevronDown, Trash2 } from 'lucide-react';
 
 export default function ChatBot() {
   const [messages, setMessages] = useState([]);
@@ -13,6 +13,8 @@ export default function ChatBot() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [activeCategory, setActiveCategory] = useState('coding');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const pdfInputRef = useRef(null);
@@ -21,12 +23,31 @@ export default function ChatBot() {
   
   useEffect(() => {
     if (!loading && inputRef.current && hasSentFirstMessage) {
-      inputRef.current.focus();
+      // تجنب إعادة التركيز على الموبايل لأنه يسبب إغلاق السايدبار
+      if (window.innerWidth >= 768) {
+        inputRef.current.focus();
+      }
     }
   }, [loading, hasSentFirstMessage]);
   
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   setTimeout(() => {
-    inputRef.current?.focus();
+    // فقط على الشاشات الكبيرة
+    if (window.innerWidth >= 768 && inputRef.current) {
+      inputRef.current.focus();
+    }
   }, 100);
 
   if (!hasSentFirstMessage) {
@@ -35,171 +56,31 @@ export default function ChatBot() {
   
   const models = {
     coding: [
-      { 
-        id: 'mimo-v2-flash', 
-        name: 'MiMo V2 Flash', 
-        desc: 'الأقوى - 309B معامل - استدلال فائق', 
-        color: 'from-emerald-600 to-teal-600',
-        rank: 1,
-        apiId: 'xiaomi/mimo-v2-flash:free'
-      },
-      { 
-        id: 'kat-coder', 
-        name: 'KAT Coder Pro V1', 
-        desc: 'الأفضل للبرمجة - معدل حل 73.4%', 
-        color: 'from-purple-600 to-pink-600',
-        rank: 2,
-        apiId: 'kwaipilot/kat-coder-pro:free'
-      },
-      { 
-        id: 'deepseek-r1t2', 
-        name: 'DeepSeek R1T2 Chimera', 
-        desc: 'استدلال قوي - 164K سياق', 
-        color: 'from-blue-600 to-cyan-600',
-        rank: 3,
-        apiId: 'tngtech/deepseek-r1t2-chimera:free'
-      },
-      { 
-        id: 'qwen3', 
-        name: 'Qwen3 235B A22B', 
-        desc: 'تفكير عميق - 131K سياق', 
-        color: 'from-indigo-600 to-purple-600',
-        rank: 4,
-        apiId: 'qwen/qwen3-235b-a22b:free'
-      },
-      { 
-        id: 'mistral-small', 
-        name: 'Mistral Small 3.1 24B', 
-        desc: 'متوازن - 128K سياق', 
-        color: 'from-orange-600 to-red-600',
-        rank: 5,
-        apiId: 'mistralai/mistral-small-3.1-24b:free'
-      },
-      { 
-        id: 'gemini-flash', 
-        name: 'Gemini 2.0 Flash', 
-        desc: 'سريع جداً - 1M سياق', 
-        color: 'from-red-600 to-pink-600',
-        rank: 6,
-        apiId: 'google/gemini-2.0-flash-exp:free'
-      },
+      { id: 'mimo-v2-flash', name: 'MiMo V2 Flash', apiId: 'xiaomi/mimo-v2-flash:free' },
+      { id: 'kat-coder', name: 'KAT Coder Pro V1', apiId: 'kwaipilot/kat-coder-pro:free' },
+      { id: 'deepseek-r1t2', name: 'DeepSeek R1T2', apiId: 'tngtech/deepseek-r1t2-chimera:free' },
+      { id: 'qwen3', name: 'Qwen3 235B', apiId: 'qwen/qwen3-235b-a22b:free' },
+      { id: 'mistral-small', name: 'Mistral Small 3.1', apiId: 'mistralai/mistral-small-3.1-24b:free' },
+      { id: 'gemini-flash', name: 'Gemini 2.0 Flash', apiId: 'google/gemini-2.0-flash-exp:free' },
     ],
     chat: [
-      { 
-        id: 'mimo-v2-flash-chat', 
-        name: 'MiMo V2 Flash', 
-        desc: 'الأقوى - 309B معامل - متعدد اللغات', 
-        color: 'from-emerald-600 to-teal-600',
-        rank: 1,
-        apiId: 'xiaomi/mimo-v2-flash:free'
-      },
-      { 
-        id: 'qwen3-chat', 
-        name: 'Qwen3 235B A22B', 
-        desc: '100+ لغة - استدلال قوي', 
-        color: 'from-indigo-600 to-purple-600',
-        rank: 2,
-        apiId: 'qwen/qwen3-235b-a22b:free'
-      },
-      { 
-        id: 'gemini-flash-chat', 
-        name: 'Gemini 2.0 Flash', 
-        desc: 'سريع - متعدد الوسائط', 
-        color: 'from-red-600 to-pink-600',
-        rank: 3,
-        apiId: 'google/gemini-2.0-flash-exp:free'
-      },
-      { 
-        id: 'deepseek-r1t2-chat', 
-        name: 'DeepSeek R1T2 Chimera', 
-        desc: 'استدلال منطقي', 
-        color: 'from-blue-600 to-cyan-600',
-        rank: 4,
-        apiId: 'tngtech/deepseek-r1t2-chimera:free'
-      },
-      { 
-        id: 'mistral-small-chat', 
-        name: 'Mistral Small 3.1 24B', 
-        desc: 'متعدد اللغات', 
-        color: 'from-orange-600 to-red-600',
-        rank: 5,
-        apiId: 'mistralai/mistral-small-3.1-24b:free'
-      },
-      { 
-        id: 'llama-70b', 
-        name: 'Llama 3.3 70B', 
-        desc: '8 لغات مدعومة', 
-        color: 'from-green-600 to-emerald-600',
-        rank: 6,
-        apiId: 'meta-llama/llama-3.3-70b-instruct:free'
-      },
+      { id: 'mimo-v2-flash-chat', name: 'MiMo V2 Flash', apiId: 'xiaomi/mimo-v2-flash:free' },
+      { id: 'qwen3-chat', name: 'Qwen3 235B', apiId: 'qwen/qwen3-235b-a22b:free' },
+      { id: 'gemini-flash-chat', name: 'Gemini 2.0 Flash', apiId: 'google/gemini-2.0-flash-exp:free' },
+      { id: 'deepseek-r1t2-chat', name: 'DeepSeek R1T2', apiId: 'tngtech/deepseek-r1t2-chimera:free' },
+      { id: 'mistral-small-chat', name: 'Mistral Small 3.1', apiId: 'mistralai/mistral-small-3.1-24b:free' },
+      { id: 'llama-70b', name: 'Llama 3.3 70B', apiId: 'meta-llama/llama-3.3-70b-instruct:free' },
     ],
     vision: [
-      { 
-        id: 'nvidia-vision', 
-        name: 'NVIDIA Nemotron 12B VL', 
-        desc: 'تحليل الصور والفيديو', 
-        color: 'from-green-600 to-teal-600',
-        rank: 1,
-        supportsImage: true,
-        apiId: 'nvidia/nemotron-nano-12b-v2-vl:free'
-      },
-      { 
-        id: 'gemini-vision', 
-        name: 'Gemini 2.0 Flash', 
-        desc: 'رؤية متقدمة - 1M سياق', 
-        color: 'from-red-600 to-pink-600',
-        rank: 2,
-        supportsImage: true,
-        apiId: 'google/gemini-2.0-flash-exp:free'
-      },
-      { 
-        id: 'mistral-vision', 
-        name: 'Mistral Small 3.1 24B', 
-        desc: 'تحليل الصور - متعدد الوسائط', 
-        color: 'from-orange-600 to-red-600',
-        rank: 3,
-        supportsImage: true,
-        apiId: 'mistralai/mistral-small-3.1-24b:free'
-      },
+      { id: 'nvidia-vision', name: 'NVIDIA Nemotron 12B', supportsImage: true, apiId: 'nvidia/nemotron-nano-12b-v2-vl:free' },
+      { id: 'gemini-vision', name: 'Gemini 2.0 Flash', supportsImage: true, apiId: 'google/gemini-2.0-flash-exp:free' },
+      { id: 'mistral-vision', name: 'Mistral Small 3.1', supportsImage: true, apiId: 'mistralai/mistral-small-3.1-24b:free' },
     ],
     documents: [
-      { 
-        id: 'gemini-docs', 
-        name: 'Gemini 2.0 Flash', 
-        desc: 'تحليل مستندات - 1M سياق', 
-        color: 'from-blue-600 to-purple-600',
-        rank: 1,
-        supportsPDF: true,
-        apiId: 'google/gemini-2.0-flash-exp:free'
-      },
-      { 
-        id: 'qwen3-docs', 
-        name: 'Qwen3 235B A22B', 
-        desc: 'استخراج معلومات - 131K سياق', 
-        color: 'from-indigo-600 to-purple-600',
-        rank: 2,
-        supportsPDF: true,
-        apiId: 'qwen/qwen3-235b-a22b:free'
-      },
-      { 
-        id: 'deepseek-docs', 
-        name: 'DeepSeek R1T2 Chimera', 
-        desc: 'تلخيص وتحليل - 164K سياق', 
-        color: 'from-cyan-600 to-blue-600',
-        rank: 3,
-        supportsPDF: true,
-        apiId: 'tngtech/deepseek-r1t2-chimera:free'
-      },
-      { 
-        id: 'mistral-docs', 
-        name: 'Mistral Small 3.1 24B', 
-        desc: 'ترجمة وشرح - 128K سياق', 
-        color: 'from-orange-600 to-amber-600',
-        rank: 4,
-        supportsPDF: true,
-        apiId: 'mistralai/mistral-small-3.1-24b:free'
-      },
+      { id: 'gemini-docs', name: 'Gemini 2.0 Flash', supportsPDF: true, apiId: 'google/gemini-2.0-flash-exp:free' },
+      { id: 'qwen3-docs', name: 'Qwen3 235B', supportsPDF: true, apiId: 'qwen/qwen3-235b-a22b:free' },
+      { id: 'deepseek-docs', name: 'DeepSeek R1T2', supportsPDF: true, apiId: 'tngtech/deepseek-r1t2-chimera:free' },
+      { id: 'mistral-docs', name: 'Mistral Small 3.1', supportsPDF: true, apiId: 'mistralai/mistral-small-3.1-24b:free' },
     ]
   };
 
@@ -229,7 +110,6 @@ export default function ChatBot() {
         alert('حجم الصورة يجب أن يكون أقل من 5MB');
         return;
       }
-      
       setSelectedImage(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -258,7 +138,6 @@ export default function ChatBot() {
         alert('حجم الملف يجب أن يكون أقل من 10MB');
         return;
       }
-      
       setSelectedFile(file);
       setFilePreview({
         name: file.name,
@@ -283,7 +162,6 @@ export default function ChatBot() {
     if ((!input.trim() && !selectedImage) || loading) return;
 
     const currentModel = getCurrentModel();
-
     if (!currentModel) return null;
     
     if (selectedImage && !currentModel.supportsImage) {
@@ -314,9 +192,7 @@ export default function ChatBot() {
 
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...messages.map(m => ({ role: m.role, content: m.content })), 
                      { role: 'user', content: input }],
@@ -359,360 +235,325 @@ export default function ChatBot() {
   const currentModel = getCurrentModel();
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900" dir="rtl">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 shadow-2xl border-b border-slate-700 flex-shrink-0 overflow-hidden">
-        <div className="max-w-6xl mx-auto p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-xl bg-gradient-to-r ${currentModel.color}`}>
-                <Cpu className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-                  شات بوت ذكي
-                </h1>
-                <p className="text-xs text-gray-400">مجاني بالكامل - نماذج متعددة</p>
-              </div>
-            </div>
-            
-            {messages.length > 0 && (
-              <button
-                onClick={clearChat}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600/20 text-red-400 hover:bg-red-600/30 transition-all border border-red-600/50 text-sm font-semibold"
-              >
-                <Trash2 className="w-4 h-4" />
-                مسح
-              </button>
-            )}
-          </div>
-          
-          <div className="flex gap-2 mb-4">
-            {categories.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all font-semibold ${
-                    activeCategory === cat.id
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'bg-slate-800 text-gray-400 hover:bg-slate-700 border border-slate-700'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {cat.name}
-                </button>
-              );
-            })}
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
-            {models[activeCategory].map((model, idx) => (
-              <button
-                key={model.id}
-                onClick={() => setSelectedModel(model.id)}
-                disabled={loading}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap border min-w-fit ${
-                  selectedModel === model.id
-                    ? `bg-gradient-to-r ${model.color} text-white shadow-lg scale-105 border-transparent`
-                    : 'bg-slate-800 text-gray-300 hover:bg-slate-700 border-slate-700'
-                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                <div className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${
-                    selectedModel === model.id ? 'bg-white/20' : 'bg-slate-700'
-                  }`}>
-                    #{idx + 1}
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold text-sm">{model.name}</div>
-                    <div className="text-xs opacity-75">{model.desc}</div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="flex h-[100dvh] bg-[#212121] text-white overflow-hidden" dir="rtl">
+      {/* Sidebar Overlay for Mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/70 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0">
-        <div className="max-w-4xl mx-auto space-y-4 pb-4">
-          {messages.length === 0 && (
-            <div className="text-center mt-20 animate-fade-in">
-              <div className={`inline-flex p-6 rounded-2xl bg-gradient-to-r ${currentModel.color} mb-6`}>
-                {activeCategory === 'coding' && <Code className="w-16 h-16 text-white" />}
-                {activeCategory === 'chat' && <MessageSquare className="w-16 h-16 text-white" />}
-                {activeCategory === 'vision' && <Camera className="w-16 h-16 text-white" />}
-                {activeCategory === 'documents' && <FileText className="w-16 h-16 text-white" />}
-              </div>
-              
-              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-3">
-                مرحباً بك
-              </h2>
-              <p className="text-xl text-gray-400 mb-2">{currentModel.name}</p>
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${currentModel.color} text-white text-sm font-semibold mb-6`}>
-                <Sparkles className="w-4 h-4" />
-                المرتبة #{currentModel.rank} في فئة {categories.find(c => c.id === activeCategory).name}
-              </div>
-              
-              <p className="text-sm text-gray-500 max-w-md mx-auto mb-8">{currentModel.desc}</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto text-right">
-                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                  <Brain className="w-8 h-8 text-blue-400 mb-2" />
-                  <p className="text-sm text-gray-300">ذكاء متقدم</p>
-                </div>
-                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                  <Zap className="w-8 h-8 text-yellow-400 mb-2" />
-                  <p className="text-sm text-gray-300">سرعة عالية</p>
-                </div>
-                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                  <Sparkles className="w-8 h-8 text-purple-400 mb-2" />
-                  <p className="text-sm text-gray-300">مجاني 100%</p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex gap-3 animate-slide-in ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}
+      {/* Sidebar */}
+      <aside className={`fixed md:relative top-0 right-0 h-full bg-[#171717] transition-transform duration-300 ease-in-out border-l border-gray-800 z-50 w-64 ${
+        sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'
+      } ${!sidebarOpen ? 'md:w-0 md:border-0' : ''}`}>
+        <div className={`p-4 h-full flex flex-col ${!sidebarOpen ? 'md:hidden' : ''}`}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold">شات بوت ذكي</h2>
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="p-1 hover:bg-gray-800 rounded md:hidden"
             >
-              {msg.role === 'user' && (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                  <MessageSquare className="w-5 h-5 text-white" />
-                </div>
-              )}
-              
-              <div
-                className={`max-w-2xl p-4 rounded-2xl shadow-xl ${
-                  msg.role === 'user'
-                    ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white'
-                    : 'bg-slate-800 text-gray-100 border border-slate-700'
-                }`}
-              >
-                {msg.image && (
-                  <img 
-                    src={msg.image} 
-                    alt="uploaded" 
-                    className="rounded-lg mb-3 max-w-full h-auto max-h-64 object-contain border-2 border-white/20"
-                  />
-                )}
-                {msg.file && (
-                  <div className="flex items-center gap-2 mb-3 p-3 bg-white/10 rounded-lg border border-white/20">
-                    <FileText className="w-5 h-5" />
-                    <div className="text-sm">
-                      <div className="font-semibold">{msg.file.name}</div>
-                      <div className="text-xs opacity-75">{msg.file.size} MB</div>
-                    </div>
-                  </div>
-                )}
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
-              </div>
-              
-              {msg.role === 'assistant' && (
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${currentModel.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                  <Cpu className="w-5 h-5 text-white" />
-                </div>
-              )}
-            </div>
-          ))}
-          
-          {loading && (
-            <div className="flex gap-3 justify-end animate-slide-in">
-              <div className="bg-slate-800 p-4 rounded-2xl shadow-xl border border-slate-700">
-                <div className="flex gap-2">
-                  <div className={`w-2.5 h-2.5 bg-gradient-to-r ${currentModel.color} rounded-full animate-bounce`}></div>
-                  <div className={`w-2.5 h-2.5 bg-gradient-to-r ${currentModel.color} rounded-full animate-bounce`} style={{animationDelay: '0.1s'}}></div>
-                  <div className={`w-2.5 h-2.5 bg-gradient-to-r ${currentModel.color} rounded-full animate-bounce`} style={{animationDelay: '0.2s'}}></div>
-                </div>
-              </div>
-              <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${currentModel.color} flex items-center justify-center flex-shrink-0 shadow-lg`}>
-                <Cpu className="w-5 h-5 text-white" />
-              </div>
-            </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 border-t border-slate-700 p-4 shadow-2xl flex-shrink-0 overflow-hidden">
-        <div className="max-w-4xl mx-auto">
-          {imagePreview && (
-            <div className="mb-3 relative inline-block mr-2">
-              <img 
-                src={imagePreview} 
-                alt="preview" 
-                className="rounded-lg h-24 object-cover border-2 border-green-500"
-              />
-              <button
-                onClick={removeImage}
-                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition-all shadow-lg"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-          
-          {filePreview && (
-            <div className="mb-3 relative inline-block">
-              <div className="flex items-center gap-3 p-3 bg-blue-600/20 border-2 border-blue-500 rounded-lg">
-                <FileText className="w-8 h-8 text-blue-400" />
-                <div className="text-sm text-white">
-                  <div className="font-semibold">{filePreview.name}</div>
-                  <div className="text-xs opacity-75">{filePreview.size} MB</div>
-                </div>
-                <button
-                  onClick={removeFile}
-                  className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition-all shadow-lg"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-          
-          <div className="flex gap-3">
-            {currentModel.supportsPDF && (
-              <button
-                onClick={() => pdfInputRef.current?.click()}
-                disabled={loading}
-                className={`px-4 py-4 rounded-xl transition-all shadow-lg ${
-                  loading 
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-2xl hover:scale-105'
-                }`}
-                title="رفع PDF"
-              >
-                <FileText className="w-5 h-5" />
-              </button>
-            )}
-            <input
-              ref={pdfInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={handleFileSelect}
-              className="hidden"
-              disabled={loading}
-            />
-            
-            {currentModel.supportsImage && (
-              <div className="relative">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                  disabled={loading}
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={loading}
-                  className={`px-4 py-4 rounded-xl transition-all shadow-lg ${
-                    loading 
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-600 to-teal-600 text-white hover:shadow-2xl hover:scale-105'
-                  }`}
-                  title="رفع صورة"
-                >
-                  <Camera className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-            
-            <input
-              type="text"
-              value={input}
-              ref={inputRef}
-              autoFocus
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-              placeholder="اكتب رسالتك هنا..."
-              className="flex-1 p-4 bg-slate-800 border-2 border-slate-700 rounded-xl focus:outline-none focus:border-blue-500 text-right text-white placeholder-gray-500 transition-all"
-              disabled={loading}
-            />
-            
-            <button
-              onClick={sendMessage}
-              disabled={loading || (!input.trim() && !selectedImage && !selectedFile)}
-              className={`px-6 py-4 rounded-xl font-bold transition-all shadow-lg flex items-center gap-2 ${
-                loading || (!input.trim() && !selectedImage && !selectedFile)
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : `bg-gradient-to-r ${currentModel.color} text-white hover:shadow-2xl hover:scale-105`
-              }`}
-            >
-              {loading ? <Sparkles className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-            <div className="flex items-center gap-4">
-              {messages.length > 0 && <span>{messages.length} رسالة</span>}
-              {currentModel.supportsPDF && (
-                <span className="flex items-center gap-1">
-                  <FileText className="w-3 h-3" />
-                  يدعم PDF
-                </span>
-              )}
-              {currentModel.supportsImage && (
-                <span className="flex items-center gap-1">
-                  <Camera className="w-3 h-3" />
-                  يدعم الصور
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full bg-gradient-to-r ${currentModel.color} animate-pulse`}></span>
-              <span>#{currentModel.rank} - {currentModel.name}</span>
+
+          {/* Categories */}
+          <div className="mb-6">
+            <h3 className="text-xs text-gray-400 mb-2 px-2">الفئات</h3>
+            <div className="space-y-1">
+              {categories.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      if (window.innerWidth < 768) setSidebarOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
+                      activeCategory === cat.id
+                        ? 'bg-gray-800 text-white'
+                        : 'text-gray-400 hover:bg-gray-800/50'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {cat.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </div>
 
-   <style jsx global>{`
-        * {
-          box-sizing: border-box;
-        }
-        
-        @keyframes slide-in {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
-        }
-        
-        .animate-fade-in {
-          animation: fade-in 0.5s ease-out;
-        }
-        
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+          {/* Models */}
+          <div className="flex-1 overflow-y-auto">
+            <h3 className="text-xs text-gray-400 mb-2 px-2">النماذج</h3>
+            <div className="space-y-1">
+              {models[activeCategory].map((model) => (
+                <button
+                  key={model.id}
+                  onClick={() => {
+                    setSelectedModel(model.id);
+                    if (window.innerWidth < 768) setSidebarOpen(false);
+                  }}
+                  className={`w-full text-right px-3 py-2 rounded-lg transition-colors text-sm ${
+                    selectedModel === model.id
+                      ? 'bg-gray-800 text-white'
+                      : 'text-gray-400 hover:bg-gray-800/50'
+                  }`}
+                >
+                  {model.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Clear Chat Button */}
+          {messages.length > 0 && (
+            <button
+              onClick={clearChat}
+              className="flex items-center justify-center gap-2 w-full px-3 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors text-sm mt-4"
+            >
+              <Trash2 className="w-4 h-4" />
+              مسح المحادثة
+            </button>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header - كبير على الموبايل */}
+        <header className="min-h-[80px] md:h-14 border-b border-gray-800 flex items-center px-4 md:px-6 bg-[#171717] flex-shrink-0">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-4 md:p-2 hover:bg-gray-800 rounded-lg ml-3 flex-shrink-0 -mr-2"
+          >
+            <Menu className="w-8 h-8 md:w-5 md:h-5" />
+          </button>
+          
+          <div className="flex-1 flex items-center justify-center relative">
+            <button
+              onClick={() => setShowModelDropdown(!showModelDropdown)}
+              className="flex items-center gap-2 px-4 py-2 md:px-3 md:py-1.5 hover:bg-gray-800 rounded-lg text-base md:text-sm relative"
+            >
+              <span className="font-medium">{currentModel.name}</span>
+              <ChevronDown className="w-5 h-5 md:w-4 md:h-4" />
+              
+              {showModelDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-[#2a2a2a] border border-gray-700 rounded-lg shadow-xl min-w-[200px] z-50">
+                  {models[activeCategory].map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedModel(model.id);
+                        setShowModelDropdown(false);
+                      }}
+                      className={`w-full text-right px-4 py-2 hover:bg-gray-800 text-sm first:rounded-t-lg last:rounded-b-lg ${
+                        selectedModel === model.id ? 'bg-gray-800' : ''
+                      }`}
+                    >
+                      {model.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </button>
+          </div>
+        </header>
+
+        {/* Messages */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6">
+            {messages.length === 0 && (
+              <div className="text-center py-20">
+                <div className="inline-flex w-12 h-12 rounded-full bg-gray-800 items-center justify-center mb-4">
+                  <Cpu className="w-6 h-6 text-gray-400" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-300 mb-2">مرحباً بك</h2>
+                <p className="text-gray-500 text-sm">{currentModel.name}</p>
+              </div>
+            )}
+            
+            {messages.map((msg, idx) => (
+              <div key={idx} className="mb-8 group">
+                <div className="flex gap-4 items-start">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    msg.role === 'user' ? 'bg-blue-600' : 'bg-gray-800'
+                  }`}>
+                    {msg.role === 'user' ? (
+                      <MessageSquare className="w-4 h-4" />
+                    ) : (
+                      <Cpu className="w-4 h-4" />
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 space-y-2 pt-1">
+                    <div className="font-semibold text-sm text-gray-300">
+                      {msg.role === 'user' ? 'أنت' : currentModel.name}
+                    </div>
+                    
+                    {msg.image && (
+                      <img 
+                        src={msg.image} 
+                        alt="uploaded" 
+                        className="rounded-lg max-w-sm border border-gray-700"
+                      />
+                    )}
+                    
+                    <div className="text-gray-100 leading-7 whitespace-pre-wrap">
+                      {msg.content}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {loading && (
+              <div className="mb-8">
+                <div className="flex gap-4 items-start">
+                  <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+                    <Cpu className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1 pt-1">
+                    <div className="font-semibold text-sm text-gray-300 mb-2">{currentModel.name}</div>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-gray-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
+        </main>
+
+        {/* Input Area */}
+        <footer className="border-t border-gray-800 bg-[#212121] p-4 safe-bottom">
+          <div className="max-w-3xl mx-auto">
+            {/* Preview */}
+            {(imagePreview || filePreview) && (
+              <div className="flex gap-2 mb-3">
+                {imagePreview && (
+                  <div className="relative">
+                    <img 
+                      src={imagePreview} 
+                      alt="preview" 
+                      className="rounded-lg h-16 object-cover border border-gray-700"
+                    />
+                    <button
+                      onClick={removeImage}
+                      className="absolute -top-1 -right-1 bg-gray-800 hover:bg-gray-700 rounded-full w-5 h-5 flex items-center justify-center border border-gray-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+                
+                {filePreview && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-lg border border-gray-700">
+                    <FileText className="w-4 h-4 text-gray-400" />
+                    <div className="text-xs">
+                      <div className="text-gray-300">{filePreview.name}</div>
+                      <div className="text-gray-500">{filePreview.size} MB</div>
+                    </div>
+                    <button
+                      onClick={removeFile}
+                      className="mr-2 hover:text-red-400"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Input */}
+            <div className="flex items-end gap-2 bg-[#2a2a2a] rounded-2xl p-2 border border-gray-700 focus-within:border-gray-600">
+              {currentModel.supportsPDF && (
+                <>
+                  <button
+                    onClick={() => pdfInputRef.current?.click()}
+                    disabled={loading}
+                    className="p-2.5 md:p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+                  >
+                    <FileText className="w-6 h-6 md:w-5 md:h-5" />
+                  </button>
+                  <input
+                    ref={pdfInputRef}
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                </>
+              )}
+              
+              {currentModel.supportsImage && (
+                <>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                    className="p-2.5 md:p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+                  >
+                    <Camera className="w-6 h-6 md:w-5 md:h-5" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                </>
+              )}
+              
+              <textarea
+                value={input}
+                ref={inputRef}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder="أرسل رسالة..."
+                className="flex-1 bg-transparent px-2 py-2 focus:outline-none resize-none max-h-32 text-gray-100 placeholder-gray-500 text-base"
+                rows="1"
+                disabled={loading}
+                style={{
+                  minHeight: '24px',
+                  height: 'auto'
+                }}
+                onInput={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = e.target.scrollHeight + 'px';
+                }}
+              />
+              
+              <button
+                onClick={sendMessage}
+                disabled={loading || (!input.trim() && !selectedImage && !selectedFile)}
+                className="p-2.5 md:p-2 bg-white text-black hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+              >
+                <Send className="w-6 h-6 md:w-5 md:h-5" />
+              </button>
+            </div>
+            
+            <div className="text-xs text-gray-500 mt-2 text-center">
+              {currentModel.name} • نماذج AI مجانية
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
