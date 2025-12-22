@@ -7,7 +7,7 @@ export default function ChatBot() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('kat-coder');
+  const [selectedModel, setSelectedModel] = useState('mimo-v2-flash');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -18,11 +18,13 @@ export default function ChatBot() {
   const pdfInputRef = useRef(null);
   const inputRef = useRef(null);
   const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+  
   useEffect(() => {
     if (!loading && inputRef.current && hasSentFirstMessage) {
       inputRef.current.focus();
     }
   }, [loading, hasSentFirstMessage]);
+  
   setTimeout(() => {
     inputRef.current?.focus();
   }, 100);
@@ -34,11 +36,19 @@ export default function ChatBot() {
   const models = {
     coding: [
       { 
+        id: 'mimo-v2-flash', 
+        name: 'MiMo V2 Flash', 
+        desc: 'الأقوى - 309B معامل - استدلال فائق', 
+        color: 'from-emerald-600 to-teal-600',
+        rank: 1,
+        apiId: 'xiaomi/mimo-v2-flash:free'
+      },
+      { 
         id: 'kat-coder', 
         name: 'KAT Coder Pro V1', 
         desc: 'الأفضل للبرمجة - معدل حل 73.4%', 
         color: 'from-purple-600 to-pink-600',
-        rank: 1,
+        rank: 2,
         apiId: 'kwaipilot/kat-coder-pro:free'
       },
       { 
@@ -46,7 +56,7 @@ export default function ChatBot() {
         name: 'DeepSeek R1T2 Chimera', 
         desc: 'استدلال قوي - 164K سياق', 
         color: 'from-blue-600 to-cyan-600',
-        rank: 2,
+        rank: 3,
         apiId: 'tngtech/deepseek-r1t2-chimera:free'
       },
       { 
@@ -54,7 +64,7 @@ export default function ChatBot() {
         name: 'Qwen3 235B A22B', 
         desc: 'تفكير عميق - 131K سياق', 
         color: 'from-indigo-600 to-purple-600',
-        rank: 3,
+        rank: 4,
         apiId: 'qwen/qwen3-235b-a22b:free'
       },
       { 
@@ -62,7 +72,7 @@ export default function ChatBot() {
         name: 'Mistral Small 3.1 24B', 
         desc: 'متوازن - 128K سياق', 
         color: 'from-orange-600 to-red-600',
-        rank: 4,
+        rank: 5,
         apiId: 'mistralai/mistral-small-3.1-24b:free'
       },
       { 
@@ -70,17 +80,25 @@ export default function ChatBot() {
         name: 'Gemini 2.0 Flash', 
         desc: 'سريع جداً - 1M سياق', 
         color: 'from-red-600 to-pink-600',
-        rank: 5,
+        rank: 6,
         apiId: 'google/gemini-2.0-flash-exp:free'
       },
     ],
     chat: [
       { 
+        id: 'mimo-v2-flash-chat', 
+        name: 'MiMo V2 Flash', 
+        desc: 'الأقوى - 309B معامل - متعدد اللغات', 
+        color: 'from-emerald-600 to-teal-600',
+        rank: 1,
+        apiId: 'xiaomi/mimo-v2-flash:free'
+      },
+      { 
         id: 'qwen3-chat', 
         name: 'Qwen3 235B A22B', 
         desc: '100+ لغة - استدلال قوي', 
         color: 'from-indigo-600 to-purple-600',
-        rank: 1,
+        rank: 2,
         apiId: 'qwen/qwen3-235b-a22b:free'
       },
       { 
@@ -88,7 +106,7 @@ export default function ChatBot() {
         name: 'Gemini 2.0 Flash', 
         desc: 'سريع - متعدد الوسائط', 
         color: 'from-red-600 to-pink-600',
-        rank: 2,
+        rank: 3,
         apiId: 'google/gemini-2.0-flash-exp:free'
       },
       { 
@@ -96,7 +114,7 @@ export default function ChatBot() {
         name: 'DeepSeek R1T2 Chimera', 
         desc: 'استدلال منطقي', 
         color: 'from-blue-600 to-cyan-600',
-        rank: 3,
+        rank: 4,
         apiId: 'tngtech/deepseek-r1t2-chimera:free'
       },
       { 
@@ -104,7 +122,7 @@ export default function ChatBot() {
         name: 'Mistral Small 3.1 24B', 
         desc: 'متعدد اللغات', 
         color: 'from-orange-600 to-red-600',
-        rank: 4,
+        rank: 5,
         apiId: 'mistralai/mistral-small-3.1-24b:free'
       },
       { 
@@ -112,7 +130,7 @@ export default function ChatBot() {
         name: 'Llama 3.3 70B', 
         desc: '8 لغات مدعومة', 
         color: 'from-green-600 to-emerald-600',
-        rank: 5,
+        rank: 6,
         apiId: 'meta-llama/llama-3.3-70b-instruct:free'
       },
     ],
@@ -266,7 +284,7 @@ export default function ChatBot() {
 
     const currentModel = getCurrentModel();
 
-  if (!currentModel) return null;
+    if (!currentModel) return null;
     
     if (selectedImage && !currentModel.supportsImage) {
       alert('النموذج الحالي لا يدعم الصور. انتقل لفئة "رؤية"');
@@ -341,8 +359,8 @@ export default function ChatBot() {
   const currentModel = getCurrentModel();
 
   return (
-<div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900" dir="rtl">
-<div className="bg-gradient-to-r from-slate-800 to-slate-900 shadow-2xl border-b border-slate-700 flex-shrink-0 overflow-hidden">
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900" dir="rtl">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 shadow-2xl border-b border-slate-700 flex-shrink-0 overflow-hidden">
         <div className="max-w-6xl mx-auto p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -388,7 +406,7 @@ export default function ChatBot() {
             })}
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
             {models[activeCategory].map((model, idx) => (
               <button
                 key={model.id}
@@ -418,7 +436,7 @@ export default function ChatBot() {
       </div>
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 min-h-0">
-      <div className="max-w-4xl mx-auto space-y-4 pb-4">
+        <div className="max-w-4xl mx-auto space-y-4 pb-4">
           {messages.length === 0 && (
             <div className="text-center mt-20 animate-fade-in">
               <div className={`inline-flex p-6 rounded-2xl bg-gradient-to-r ${currentModel.color} mb-6`}>
@@ -521,7 +539,7 @@ export default function ChatBot() {
       </div>
 
       <div className="bg-gradient-to-r from-slate-800 to-slate-900 border-t border-slate-700 p-4 shadow-2xl flex-shrink-0 overflow-hidden">
-      <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           {imagePreview && (
             <div className="mb-3 relative inline-block mr-2">
               <img 
@@ -629,7 +647,6 @@ export default function ChatBot() {
               {loading ? <Sparkles className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </button>
           </div>
-          
           <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
             <div className="flex items-center gap-4">
               {messages.length > 0 && <span>{messages.length} رسالة</span>}
